@@ -5,14 +5,7 @@ on: [push]
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
-    services:
-      # Optional: Falls du einen Datenbank-Service oder ähnliches benötigst
-      # mongo:
-      #   image: mongo
-      #   ports:
-      #     - 27017:27017
-
+    
     steps:
     - uses: actions/checkout@v2
 
