@@ -2,34 +2,44 @@ import React, { useState } from 'react';
 import './App.css';
 
 function App() {
-  const [inputs, setInputs] = useState({ a: 0, b: 0 });
-  const [result, setResult] = useState(null);
+    const [expression, setExpression] = useState('');
+    const [result, setResult] = useState('');
 
-  const handleChange = (event) => {
-    setInputs({ ...inputs, [event.target.name]: parseInt(event.target.value, 10) });
-  };
+    const handleInputChange = (event) => {
+        setExpression(event.target.value);
+    };
 
-  const handleAdd = async () => {
-    const response = await fetch('/api/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inputs)
-    });
-    const data = await response.json();
-    setResult(data.result);
-  };
+    const handleCalculate = async () => {
+        try {
+            const response = await fetch('/api/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ expression })
+            });
+            const data = await response.json();
+            setResult(data.result || data.error);
+        } catch (error) {
+            setResult('Error: ' + error.message);
+        }
+    };
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Add Two Numbers</h1>
-        <input type="number" name="a" value={inputs.a} onChange={handleChange} />
-        <input type="number" name="b" value={inputs.b} onChange={handleChange} />
-        <button onClick={handleAdd}>Add</button>
-        <h2>Result: {result}</h2>
-      </header>
-    </div>
-  );
+    return (
+        <div className="App">
+            <header className="App-header">
+                <h1>Calculator</h1>
+                <input
+                    type="text"
+                    value={expression}
+                    onChange={handleInputChange}
+                    placeholder="Type an expression"
+                />
+                <button onClick={handleCalculate}>Calculate</button>
+                <h2>Result: {result}</h2>
+            </header>
+        </div>
+    );
 }
 
 export default App;
