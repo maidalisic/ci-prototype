@@ -1,0 +1,48 @@
+name: Fullstack CI
+
+on: [push]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      # Optional: Falls du einen Datenbank-Service oder ähnliches benötigst
+      # mongo:
+      #   image: mongo
+      #   ports:
+      #     - 27017:27017
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install Python dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+
+    - name: Run Python tests
+      run: |
+        cd backend
+        python -m unittest discover -s tests
+
+    - name: Set up Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install Node dependencies and build
+      run: |
+        cd frontend
+        npm install
+        npm run build
+
+    - name: Run frontend tests
+      run: |
+        cd frontend
+        npm test
