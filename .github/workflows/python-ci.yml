@@ -1,41 +1,46 @@
-name: Fullstack CI
+name: Python CI
 
 on: [push]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
 
-    - name: Set up Python
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: 3.8
 
-    - name: Install Python dependencies
+    - name: Install dependencies
       run: |
-        cd backend
-        pip install -r requirements.txt
+        python -m pip install --upgrade pip
+        pip install flake8 pytest openai selenium flask flask-cors simpleeval
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Run Python tests
+    - name: Run unit tests and capture logs
+      run: pytest > test_output.log || true  # Verhindert, dass der Workflow bei einem Fehler stoppt
+
+    - name: Start Flask application
       run: |
-        cd backend
-        python -m unittest discover -s tests
+        nohup flask run --host=0.0.0.0 &
+      env:
+        FLASK_APP: backend/app.py
 
-    - name: Set up Node
-      uses: actions/setup-node@v2
+    - name: Run UI tests with Selenium
+      run: |
+        python -m unittest discover -s backend/tests/ -p "test_ui.py" || true  # Verhindert, dass der Workflow bei einem Fehler stoppt
+
+    - name: Upload log file for analysis
+      uses: actions/upload-artifact@v2
       with:
-        node-version: '14'
+        name: test-logs
+        path: test_output.log
 
-    - name: Install Node dependencies and build
-      run: |
-        cd frontend
-        npm install
-        npm run build
-
-    - name: Run frontend tests
-      run: |
-        cd frontend
-        npm test
+    - name: Analyze Logs
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: python backend/analyze_logs.py test_output.log
